@@ -1,0 +1,36 @@
+# Instrucciones:
+
+# 1. asegúrate de que solana playground esté configurado 
+# en la red devnet.
+
+# 2. ejecuta el siguiente comando en la terminal de solana
+# playground para obtener la llave pública de tu wallet:
+
+solana address
+
+# 3. solicita un airdrop de 2 SOL a tu wallet ejecutando el 
+# siguiente comando:
+
+solana airdrop 2
+
+# 4. puedes utilizar como recipiente de la transferencia
+# cualquier llave publica que poseas (diferente a tu wallet)
+# o utilizar la siguiente llave publica de prueba:
+
+DkZzfBuYvvujhHA8dGAY7J7oWJ4pkMJFFHeXsUSjKGcv
+
+# 5. Ejecuta la transferencia de 1 SOL entre tu wallet y  
+# la wallet recipiente ejecutando el siguiente comando, 
+# debes sustituir <RECIPIENT_ADDRESS> por la dirección  
+# de la wallet recipiente o wallet de prueba:
+
+solana transfer <RECIPIENT_ADDRESS> 1 
+
+# 6. al ejecutar el comando anterior, el CLI devolverá 
+# la firma de la transacción, algo similar a:
+
+Signature: <TRANSACTION_SIGNATURE>
+
+# 7. puedes verificar los detalles la transacción en el 
+# explorador de Solana https://explorer.solana.com/?cluster=devnet
+# haciendo una búsqueda de la firma de la transacción.
