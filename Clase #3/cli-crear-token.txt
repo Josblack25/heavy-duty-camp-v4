@@ -1,0 +1,48 @@
+# Instrucciones:
+
+# 1. Asegúrate de que Solana Playground esté configurado
+# en la red Devnet y que tienes balance SOL suficiente.
+
+solana balance
+
+# 2. De ser necesario, solicita un airdrop, ya que necesitarás SOL para
+# ejecutar las transacciones asociadas a la creación de un nuevo token.
+
+solana airdrop 2
+
+# 3. Para crear un nuevo token es necesario crear una nueva cuenta mint
+# para ello, ejecuta el siguiente comando:
+
+spl-token create-token
+
+# 4. Los nuevos tokens inicialmente no tienen suministro, 
+# puedes comprobar el suministro actual de un token usando 
+# el siguiente comando, donde debes sustituir <TOKEN_ADDRESS>
+# por la dirección de la cuenta mint creada anteriormente:
+
+spl-token supply <TOKEN_ADDRESS>
+
+# 5. Para tener unidades de un token particular, debemos crear 
+# una cuenta token ejecutando el siguiente comando, donde debes
+# sustituir <TOKEN_ADDRESS> por la dirección de la cuenta mint 
+# del token deseado:
+
+spl-token create-account <TOKEN_ADDRESS>
+
+# 6. Por defecto, el comando anterior crea una cuenta de token 
+# asociada, para crear una cuenta token para un propietario específico
+# ejecuta el siguiente comando, donde debes sustituir <OWNER_ADDRESS>
+# por la dirección de la billetera del propietario y sustituir
+# <TOKEN_ADDRESS> por la dirección de la cuenta mint.
+
+spl-token create-account --owner <OWNER_ADDRESS> <TOKEN_ADDRESS>
+
+# 7. Para crear y asignar nuevas unidades de un token específico 
+# ejecuta el siguiente comando, donde debes sustituir <TOKEN_ADDRESS>
+# por la dirección de la cuenta mint, <TOKEN_AMOUNT> por la cantidad de 
+# nuevas unidades de tokens que deseas crear y [RECIPIENT_TOKEN_ACCOUNT_ADDRESS]
+# por la cuenta token a la que se le asignarán las nuevas unidades creadas.
+# si deseas recibir las nuevas unidades en tu cuenta token, solo debes omitir
+# [--] [RECIPIENT_TOKEN_ACCOUNT_ADDRESS] del comando.
+
+spl-token mint  <TOKEN_ADDRESS> <TOKEN_AMOUNT> [--] [RECIPIENT_TOKEN_ACCOUNT_ADDRESS]

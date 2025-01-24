@@ -23,7 +23,7 @@ pub mod contador {
 #[derive(Accounts)]
 pub struct CrearContador<'info> {
     //3. cuentas
-    #[account(init, payer = user, space = Contador::INIT_SPACE)]
+    #[account(init, payer = user, space = 8 + Contador::INIT_SPACE)]
     pub contador: Account<'info, Contador>,
 
     #[account(mut)]

@@ -1,0 +1,6 @@
+Cuenta Mint para USDC:
+https://explorer.solana.com/address/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+Cuenta token para USDC:
+https://explorer.solana.com/address/GPYEqFz25PmY6Fo6NDwiMQ1NxACz9xr3edhZCG36dJ5Z
+
