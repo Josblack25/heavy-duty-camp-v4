@@ -1,20 +1,23 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{transfer,close_account, CloseAccount, Token, TokenAccount, Transfer, Mint};
 
-declare_id!("D7ko992PKYLDKFy3fWCQsePvWF3Z7CmvoDHnViGf8bfm");
+declare_id!("HJDxoEkVaJ56KD9kuXJ6JLu5WZttaN8iiSAGgxy7NVta");
 
 #[program]
 pub mod escrow {
     use super::*;
 
-    pub fn initializar(ctx: Context<Inicializar>,token_a_amount: u64,token_b_amount: u64) -> Result<()> {
+    pub fn initializar(ctx: Context<Inicializar>,cantidad_token_a: u64, cantidad_token_b: u64) -> Result<()> {
 
-        // almacenamos la información del intercambio en la cuenta escrow
+        // almacenamos la información del inicializador
         ctx.accounts.escrow.inicializador = ctx.accounts.inicializador.key();
+        // almacenamos la informacion del intercambio
         ctx.accounts.escrow.mint_a = ctx.accounts.mint_a.key();
-        ctx.accounts.escrow.token_a_amount = token_a_amount;
+        ctx.accounts.escrow.cantidad_token_a = cantidad_token_a * 10_u64.pow(ctx.accounts.mint_a.decimals.into());
         ctx.accounts.escrow.mint_b = ctx.accounts.mint_b.key();
-        ctx.accounts.escrow.token_b_amount = token_b_amount;
+        ctx.accounts.escrow.cantidad_token_b = cantidad_token_b * 10_u64.pow(ctx.accounts.mint_b.decimals.into());
+        // almacenamos los bumps
+        ctx.accounts.escrow.bump_escrow = ctx.bumps.escrow;
         ctx.accounts.escrow.bump_cuenta_garantia = ctx.bumps.cuenta_de_garantia;
 
         /* 
@@ -33,7 +36,7 @@ pub mod escrow {
         );
 
        // hacemos CPI al token program
-       transfer(cpi_ctx,token_a_amount)?;
+       transfer(cpi_ctx,ctx.accounts.escrow.cantidad_token_a)?;
 
         Ok(())
     }
@@ -56,7 +59,7 @@ pub mod escrow {
             },
         );
 
-        transfer(cpi_al_inicializador, ctx.accounts.escrow.token_b_amount)?;
+        transfer(cpi_al_inicializador, ctx.accounts.escrow.cantidad_token_b)?;
 
        /*
        Una vez que el usuario incializador recibe los token_B del intercambio, el programa
@@ -124,7 +127,13 @@ cuentas:
 #[derive(Accounts)]
 pub struct Inicializar<'info> {
 
-    #[account(  init, payer = inicializador, space = 8 + Escrow::INIT_SPACE)]
+    #[account(
+        init,
+        payer = inicializador, 
+        space = 8 + Escrow::INIT_SPACE,
+        seeds = [inicializador.key().as_ref()],
+        bump,
+    )]
     pub escrow: Account<'info, Escrow>, // Cuenta de datos que almacena la información del intercambio
 
     #[account(mut)]
@@ -132,8 +141,7 @@ pub struct Inicializar<'info> {
 
     #[account(
         mut, // mutable porque se de debitará saldo
-        associated_token::mint = mint_b.key(),
-        associated_token::authority = inicializador.key(),
+        constraint = inicializador_token_account_a.mint == mint_a.key()
     )]
     pub inicializador_token_account_a: Account<'info, TokenAccount>, // Token Account del token A del usuario inicializador
 
@@ -180,7 +188,11 @@ cuentas:
 */
 #[derive(Accounts)]
 pub struct Finalizar<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [inicializador.key().as_ref()], // semillas PDA
+        bump = escrow.bump_escrow, // bump
+    )]
     pub escrow: Account<'info, Escrow>, // Cuenta de datos que almacena la información del intercambio
 
     #[account(
@@ -227,9 +239,10 @@ PROPUESTA DE INTERCAMIO de tokens: X cantidad de tokens_A por Y cantidad de toke
 
 inicializador: usuario que crea una propuesta de intercambio. Ej: 100 USDC por 95 USDT.
 mint_a: cuenta mint del token_A que el inicializador está dispuesto a intercambiar. Ej: USDC
-token_a_amount: cantidad de token_A que el incializador desea intercambiar. Ej: 100
+cantidad_token_a: cantidad de token_A que el incializador desea intercambiar en decimales. Ej: 100 -> 0,0000001
 mint_b: cuenta mint del token_B que el inicialziador desea recibir. Ej: USDT
-token_b_amount: cantidad de token_B que el inicializador desea recibir. Ej: 95
+cantidad_token_b: cantidad de token_B que el inicializador desea recibir en decimales. Ej: 95 -> 100 -> 0,00000095
+bump_escrow: semilla bump para la PDA de la cuenta escrow.
 bump_cuenta_garantia: semilla bump para la PDA de la cuentad de garantía.
 */ 
 #[account]
@@ -237,8 +250,9 @@ bump_cuenta_garantia: semilla bump para la PDA de la cuentad de garantía.
 pub struct Escrow {
     pub inicializador: Pubkey,      // usuario que crea una propuesta de intercambio
     pub mint_a: Pubkey,             // mint del token_A que el inicializador está dispuesto a intercambiar
-    pub token_a_amount: u64,        // cantidad de token_A que el incializador desea intercambiar
+    pub cantidad_token_a: u64,        // cantidad de token_A que el incializador desea intercambiar (en decimales)
     pub mint_b: Pubkey,             // cuenta mint del token_B que el inicialziador desea recibir
-    pub token_b_amount: u64,        // cantidad de token_B que el inicializador desea recibir
+    pub cantidad_token_b: u64,        // cantidad de token_B que el inicializador desea recibir (en decimales)
+    pub bump_escrow: u8,               // semilla bump para la PDA de la cuenta escrow
     pub bump_cuenta_garantia: u8,   // semilla bump para la PDA de la cuentad de garantía
 }
