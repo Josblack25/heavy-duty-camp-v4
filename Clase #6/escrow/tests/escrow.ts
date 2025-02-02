@@ -1,9 +1,19 @@
 // No imports needed: web3, anchor, pg and more are globally available
 import { PublicKey } from "@solana/web3.js";
 import * as spl from "@solana/spl-token";
+import * as web3 from "@solana/web3.js";
+import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
+import { assert } from "chai";
+import { Program } from "@coral-xyz/anchor";
+import { Escrow } from "../target/types/escrow";
+import { BN } from "bn.js";
 
 describe("Test", () => {
   // antes de nada definimos las cuentas que vamos a necesitar
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+
+  const program = anchor.workspace.ManejadorEventos as Program<Escrow>;
 
   // tokens
   let tokenA: PublicKey; // example: USDC
@@ -16,7 +26,7 @@ describe("Test", () => {
   /* 
    El usuario inicializador que será nuestra wallet
    */
-  let inicializador = pg.wallet.keypair;
+  let inicializador = provider.wallet as NodeWallet;
   let inicializadorTokenA: PublicKey; // cuenta token asociada al incializador y el Token A
 
   // id del scrow (timestamp)
@@ -31,21 +41,21 @@ describe("Test", () => {
     // ESTO NO CREA LA CUENTA
     [escrow] = web3.PublicKey.findProgramAddressSync(
       [inicializador.publicKey.toBuffer(), Buffer.from(id)],
-      pg.PROGRAM_ID
+      program.programId
     );
     console.log("cuenta del escrow: ", escrow.toBase58());
 
     // encontramos una dirección PDA para la cuenta de garantía
     [garantia] = anchor.web3.PublicKey.findProgramAddressSync(
       [escrow.toBuffer()],
-      pg.PROGRAM_ID
+      program.programId
     );
     console.log("cuenta dela garantia: ", garantia.toBase58());
 
     // creamos el token A
     tokenA = await spl.createMint(
-      pg.connection, // conexion a solana
-      inicializador, // el que paga los fees
+      provider.connection, // conexion a solana
+      inicializador.payer, // el que paga los fees
       inicializador.publicKey, // el mint authority
       inicializador.publicKey, // el freeza authority
       2 // decimales del token
@@ -54,8 +64,8 @@ describe("Test", () => {
 
     // creamos el token B
     tokenB = await spl.createMint(
-      pg.connection, // conexion a solana
-      inicializador, // el que paga los fees
+      provider.connection, // conexion a solana
+      inicializador.payer, // el que paga los fees
       inicializador.publicKey, // el mint authority
       inicializador.publicKey, // el freeza authority
       2 // decimales del token
@@ -64,8 +74,8 @@ describe("Test", () => {
 
     // creamos la cuenta token asociada al inicializador y el token A
     inicializadorTokenA = await spl.createAssociatedTokenAccount(
-      pg.connection, // conexion a la red
-      inicializador, // paga los fees
+      provider.connection, // conexion a la red
+      inicializador.payer, // paga los fees
       tokenA, // tokens almacenados en la cuenta
       inicializador.publicKey // owner de los tokens
     );
@@ -77,11 +87,11 @@ describe("Test", () => {
     hacemos mint de tokens A a la cuenta token asociada al incializador y el token A
     */
     await spl.mintTo(
-      pg.connection, // conexion a solana
-      inicializador, // el que paga los fees
+      provider.connection, // conexion a solana
+      inicializador.payer, // el que paga los fees
       tokenA, // token a mintear
       inicializadorTokenA, // donde depositarlos
-      inicializador, // mint authority
+      inicializador.publicKey, // mint authority
       100000 // cantidad a mintear (expresada en decimales)
     );
   });
@@ -93,7 +103,7 @@ describe("Test", () => {
     const cantidadTokenB = new BN(95); // 95 tokens B
 
     // llamamos a la isntrucción
-    let txHash = await pg.program.methods
+    let txHash = await program.methods
       .inicializar(id, cantidadTokenA, cantidadTokenB)
       .accounts({
         escrow: escrow,
@@ -103,16 +113,16 @@ describe("Test", () => {
         tokenA: tokenA,
         tokenB: tokenB,
       })
-      .signers([inicializador])
+      .signers([inicializador.payer])
       .rpc();
 
     // Confirmamos la transaccion transaction
-    await pg.connection.confirmTransaction(txHash);
+    await provider.connection.confirmTransaction(txHash);
 
     // verificamos que se haya depositado la cantidad en la cuenta de garantía
-    let deposito = (await spl.getAccount(pg.connection, garantia)).amount;
+    let deposito = (await spl.getAccount(provider.connection, garantia)).amount;
 
     // assert
-    assert.equal(cantidadTokenA.toNumber() * 10 ** 2, deposito);
+    assert.equal(cantidadTokenA.toNumber() * 10 ** 2, Number(deposito));
   });
 });
