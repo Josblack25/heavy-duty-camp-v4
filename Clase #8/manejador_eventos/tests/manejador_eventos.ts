@@ -103,4 +103,68 @@ describe("manejador_eventos", () => {
     // comprobamos que el precio del token sea correcto (y esta expresado en la unidad minima del token)
     assert.equal(infoEvento.precioToken.toNumber(), precioToken );
   });
+
+  it("Finaliza un evento", async () => {
+    // llamamo a la instrucción eliminar
+    const tx = await program.methods
+      .finalizarEvento()
+      // enviamos las cuentas asociadas a la instrucción
+      .accounts({
+        evento: evento,
+        autoridad: autoridad.publicKey,
+      })
+      // firma la autoridad creadora del evento
+      .signers([autoridad.payer])
+      // enviamos a la red
+      .rpc();
+
+    //Confirmamos la transaccion
+    const latestBlockHash = await provider.connection.getLatestBlockhash();
+
+    await provider.connection.confirmTransaction({
+      blockhash: latestBlockHash.blockhash,
+      lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+      signature: tx,
+    });
+
+    //Podemos ver la informacion almacenada en la cuenta del evento
+    // en este caso debe ser null porque no debe existir
+    const infoEvento = await program.account.evento.fetchNullable(evento);
+
+    console.log("Evento activo: ", infoEvento.activo);
+  });
+  it("Elimina el evento creado anteriormente", async () => {
+    // llamamo a la instrucción eliminar
+    const tx = await program.methods
+      .eliminarEvento()
+      // enviamos las cuentas asociadas a la instrucción
+      .accounts({
+        evento: evento,
+        bovedaEvento: bovedaEvento,
+        bovedaGanancias: bovedaGanancias,
+        tokenEvento: tokenEvento,
+        autoridad: autoridad.publicKey,
+      })
+      // firma la autoridad creadora del evento
+      .signers([autoridad.payer])
+      // enviamos a la red
+      .rpc();
+    //Confirmamos la transaccion
+    //Confirmamos la transaccion
+    const latestBlockHash = await provider.connection.getLatestBlockhash();
+
+    await provider.connection.confirmTransaction({
+      blockhash: latestBlockHash.blockhash,
+      lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+      signature: tx,
+    });
+
+
+    //Podemos ver la informacion almacenada en la cuenta del evento
+    // en este caso debe ser null porque no debe existir
+    const infoEvento = await program.account.evento.fetchNullable(evento);
+
+    console.log("Información del evento: ", infoEvento);
+  });
+
 });

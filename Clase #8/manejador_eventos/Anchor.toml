@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-manejador_eventos = "3rnFTCvX6kCbWDRHwiNgok2p8TiaCw6mTAPnV2rT35Mt"
+manejador_eventos = "5huE81uqJWvRjuJNE4ms1sBX7fnCK58Y2Ywx6PAtea7m"
 
 [registry]
 url = "https://api.apr.dev"
