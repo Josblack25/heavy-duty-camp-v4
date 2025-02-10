@@ -29,6 +29,7 @@ pub struct EliminarEvento<'info> {
         ],
         bump = evento.bump_evento,
         // verificaciones previas a elimimanr la cuenta
+        constraint = evento.entradas_vendidas == 0 @ CodigoError::EventoConSponsors, // no hay sponsors todavía
         constraint = evento.total_sponsors == 0 @ CodigoError::EventoConSponsors, // no hay sponsors todavía
         constraint = evento.autoridad == autoridad.key() @ CodigoError::UsuarioNoAutorizado, // el usuario esta autorizado
         close = autoridad // cierra automaticamente la cuenta evento y devuelve la renta al usuario autoridad

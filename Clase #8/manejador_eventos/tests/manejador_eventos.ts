@@ -104,6 +104,7 @@ describe("manejador_eventos", () => {
     assert.equal(infoEvento.precioToken.toNumber(), precioToken );
   });
 
+  ///////////////////////////////////////// CLASE 8 //////////////////////////////////////////////////////
   it("Finaliza un evento", async () => {
     // llamamo a la instrucción eliminar
     const tx = await program.methods
